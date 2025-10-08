@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test</title>
+    <style>
+        .upload-box {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 50px;
+        }
+        .upload-box:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>오디오 생성기 테스트</h1>
+    
+    <input type="file" id="videoInput" accept="video/*" hidden>
+    <div class="upload-box" id="videoUploadBox">
+        <p>클릭하여 비디오 업로드</p>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Test page loaded');
+            
+            const videoUploadBox = document.getElementById('videoUploadBox');
+            const videoInput = document.getElementById('videoInput');
+            const result = document.getElementById('result');
+            
+            if (!videoUploadBox || !videoInput) {
+                console.error('Elements not found!');
+                return;
+            }
+            
+            console.log('Elements found successfully');
+            
+            videoUploadBox.addEventListener('click', () => {
+                console.log('Upload box clicked');
+                videoInput.click();
+            });
+            
+            videoInput.addEventListener('change', (e) => {
+                console.log('File selected:', e.target.files[0]);
+                if (e.target.files.length > 0) {
+                    result.innerHTML = `<p>선택된 파일: ${e.target.files[0].name}</p>`;
+                }
+            });
+            
+            console.log('Event listeners added');
+        });
+    </script>
+</body>
+</html>

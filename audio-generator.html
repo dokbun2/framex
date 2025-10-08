@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Generator - AI 사운드 생성기</title>
+    <link rel="stylesheet" href="audio-styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <a href="audio-generator.html" class="logo">AUDIO 생성기</a>
+            <div class="header-controls">
+                <a href="index.html" class="btn-secondary" style="text-decoration: none;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M15 10H5M5 10L10 5M5 10L10 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    프레임 추출기로
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="audio-container">
+                <!-- Left Section: Video Upload & Preview -->
+                <section class="video-section">
+                    <h2>비디오 업로드</h2>
+                    <input type="file" id="videoInput" accept="video/*" hidden>
+                    <div class="upload-box" id="videoUploadBox">
+                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" class="upload-icon">
+                            <circle cx="30" cy="30" r="29" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3" opacity="0.3"/>
+                            <path d="M30 20V40M30 40L25 35M30 40L35 35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <p>비디오를 드래그하거나 클릭하여 업로드</p>
+                    </div>
+                    <video id="videoPreview" controls style="display: none;"></video>
+                    <div class="video-info" id="videoInfo" style="display: none;">
+                        <p>파일명: <span id="fileName"></span></p>
+                        <p>길이: <span id="duration"></span>초</p>
+                    </div>
+                </section>
+
+                <!-- Center Section: Audio Controls -->
+                <section class="audio-controls">
+                    <h2>오디오 설정</h2>
+                    
+                    <!-- Gemini AI Analysis Section -->
+                    <div class="ai-analysis-section">
+                        <div class="api-key-section" id="apiKeySection">
+                            <h3>🤖 Gemini AI 자동 분석</h3>
+                            <div class="api-key-input-group">
+                                <input type="password" 
+                                       id="geminiApiKey" 
+                                       placeholder="Gemini API Key 입력" 
+                                       class="api-key-input">
+                                <button id="saveApiKey" class="btn-save-key">저장</button>
+                            </div>
+                            <p class="api-hint">
+                                <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener">
+                                    API Key 발급받기 →
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <div class="ai-controls" id="aiControls" style="display: none;">
+                            <button id="analyzeVideo" class="btn-analyze">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                비디오 분석 시작
+                            </button>
+                            <div class="analysis-options">
+                                <label>
+                                    <input type="checkbox" id="autoApply" checked>
+                                    분석 결과 자동 적용
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-progress" id="analysisProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="analyzeProgressFill"></div>
+                            </div>
+                            <p class="progress-text">프레임 분석 중... <span id="analyzeProgressText">0%</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Generated Audio Info (will be populated after analysis) -->
+                    <div id="generatedAudioInfo" style="display: none;">
+                        <div class="control-group">
+                            <h3>🎵 AI 생성 오디오</h3>
+                            <div id="audioStatus" class="audio-status">
+                                <p>분석 결과에 따라 자동으로 생성됩니다</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volume Control -->
+                    <div class="control-group">
+                        <h3>볼륨 조절</h3>
+                        <div class="volume-control">
+                            <label>배경음악</label>
+                            <input type="range" id="bgmVolume" min="0" max="100" value="50">
+                            <span id="bgmVolumeValue">50%</span>
+                        </div>
+                        <div class="volume-control">
+                            <label>효과음</label>
+                            <input type="range" id="sfxVolume" min="0" max="100" value="70">
+                            <span id="sfxVolumeValue">70%</span>
+                        </div>
+                    </div>
+
+                    <!-- Audio Visualizer -->
+                    <div class="control-group">
+                        <h3>오디오 비주얼라이저</h3>
+                        <canvas id="audioVisualizer" width="300" height="100"></canvas>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="stopAudio" class="btn-action" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <rect x="5" y="5" width="10" height="10" fill="currentColor"/>
+                            </svg>
+                            정지
+                        </button>
+                        <button id="downloadWithAudio" class="btn-success" disabled>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 2V14M10 14L6 10M10 14L14 10M3 17H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            비디오+오디오 다운로드
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Right Section: AI Audio (MMAudio) -->
+                <section class="ai-audio-section">
+                    <h2>AI 사운드 생성 (MMAudio)</h2>
+                    <div class="ai-info">
+                        <p>고급 AI 사운드 생성을 원하시면 아래 MMAudio를 사용해보세요.</p>
+                        <ul>
+                            <li>비디오 콘텐츠 기반 자동 사운드 생성</li>
+                            <li>프롬프트 기반 커스텀 오디오</li>
+                            <li>고품질 AI 생성 사운드트랙</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="external-link-container">
+                        <a href="https://huggingface.co/spaces/hkchengrex/MMAudio" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="mmaudio-link">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" 
+                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>MMAudio 열기 (새 창)</span>
+                        </a>
+                        <p class="external-note">
+                            보안상의 이유로 MMAudio는 새 창에서 열립니다.<br>
+                            클릭하여 Hugging Face Spaces에서 직접 사용하세요.
+                        </p>
+                    </div>
+
+                    <div class="ai-instructions">
+                        <h4>사용 방법:</h4>
+                        <ol>
+                            <li>위 프레임에서 비디오 업로드</li>
+                            <li>프롬프트 입력 (선택사항)</li>
+                            <li>Generate 클릭</li>
+                            <li>생성된 오디오 다운로드</li>
+                        </ol>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 Audio Generator · 제작자: Haruoff</p>
+        </footer>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal" style="display: none;">
+        <div class="modal-content">
+            <h3>오디오 처리 중...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text">잠시만 기다려주세요</p>
+        </div>
+    </div>
+
+    <script src="motion-detector.js"></script>
+    <script src="enhanced-audio-engine.js"></script>
+    <script src="audio-synthesizer.js"></script>
+    <script src="video-audio-merger.js"></script>
+    <script src="gemini-analyzer.js"></script>
+    <script src="audio-generator.js"></script>
+</body>
+</html>
