@@ -85,7 +85,7 @@
                                     <path d="M3 3l6 6"/>
                                 </svg>
                                 <select id="scaleSelect" class="h-7 bg-transparent border-0 text-sm font-medium px-1 py-0 focus:outline-none cursor-pointer hover:bg-accent/50 rounded transition-colors">
-                                    <option value="1">원본</option>
+                                    <option value="1">업스케일링</option>
                                     <option value="1.5">1.5배</option>
                                     <option value="2">2배</option>
                                     <option value="3">3배</option>
@@ -93,24 +93,6 @@
                                 </select>
                             </div>
 
-                            <!-- Divider -->
-                            <div class="h-6 w-[1px] bg-border/50"></div>
-
-                            <!-- AI Engine Control -->
-                            <div class="flex items-center gap-2 px-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
-                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                </svg>
-                                <select id="aiEngineSelect" class="h-7 bg-transparent border-0 text-sm font-medium px-1 py-0 focus:outline-none cursor-pointer hover:bg-accent/50 rounded transition-colors" disabled>
-                                    <option value="none">기본 (브라우저)</option>
-                                </select>
-                                <button id="apiKeyBtn" class="hidden h-7 px-2 rounded bg-accent/20 hover:bg-accent/30 transition-colors flex items-center justify-center gap-1 border border-border/50" title="API 키 설정">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-foreground">
-                                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-                                    </svg>
-                                    <span class="text-xs font-medium">API</span>
-                                </button>
-                            </div>
                         </div>
 
                         <!-- Sound Button (Hidden for now) -->
@@ -137,24 +119,27 @@
                             </div>
                             <div class="p-6 flex-grow flex flex-col">
                                 <!-- Upload or Video Display Area -->
-                                <div id="videoContainer" class="aspect-video bg-muted rounded-md overflow-hidden relative flex-shrink-0">
+                                <div id="videoContainer" class="aspect-video rounded-2xl overflow-hidden relative flex-shrink-0 bg-transparent">
                                     <video id="video" controls class="w-full h-full object-contain hidden"></video>
 
                                     <!-- Upload Prompt (shown when no video) -->
                                     <div id="uploadPrompt" class="w-full h-full flex items-center justify-center">
-                                        <button id="uploadBtn" class="group">
-                                            <div class="flex flex-col items-center gap-4 p-8 rounded-lg transition-all hover:bg-accent/10">
-                                                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                        <button id="uploadBtn" class="group flex flex-col items-center justify-center gap-6 w-full h-full transition-all duration-300" style="background-color: #121212;">
+                                            <!-- Icon with gradient background -->
+                                            <div class="relative">
+                                                <!-- Icon container -->
+                                                <div class="relative w-20 h-20 rounded-2xl bg-transparent flex items-center justify-center group-hover:scale-110 transition-all duration-300 ease-out border-2 border-white">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white group-hover:text-white/80 group-hover:scale-110 transition-all duration-300">
                                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                                         <polyline points="17 8 12 3 7 8"/>
                                                         <line x1="12" x2="12" y1="3" y2="15"/>
                                                     </svg>
                                                 </div>
-                                                <div class="text-center">
-                                                    <p class="text-sm font-medium">비디오 업로드</p>
-                                                    <p class="text-xs text-muted-foreground mt-1">클릭하여 선택 또는 드래그 앤 드롭</p>
-                                                </div>
+                                            </div>
+
+                                            <!-- Text content -->
+                                            <div class="text-center">
+                                                <p class="text-xl font-medium text-white group-hover:text-white/90 transition-colors duration-300">비디오 업로드</p>
                                             </div>
                                         </button>
                                     </div>
@@ -222,7 +207,7 @@
                                                 <circle cx="9" cy="9" r="2"/>
                                                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                                             </svg>
-                                            <p class="text-sm text-muted-foreground">추출된 프레임이 여기에 표시됩니다</p>
+                                            <p class="text-xl font-medium text-white">추출된 프레임이 여기에 표시됩니다</p>
                                         </div>
                                     </div>
                                 </div>

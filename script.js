@@ -15,8 +15,6 @@ const newVideo = document.getElementById('newVideo');
 const intervalSelect = document.getElementById('intervalSelect');
 const formatSelect = document.getElementById('formatSelect');
 const scaleSelect = document.getElementById('scaleSelect');
-const aiEngineSelect = document.getElementById('aiEngineSelect');
-const apiKeyBtn = document.getElementById('apiKeyBtn');
 
 const framesGrid = document.getElementById('framesGrid');
 const frameCount = document.getElementById('frameCount');
@@ -89,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeGallery();
     initializeLogo();
     initializePreviewModal();
-    // initializeAPIKey(); // API 기능 비활성화
 });
 
 // Logo functionality
@@ -699,7 +696,6 @@ async function browserUpscale(blob, scale) {
 // Extract current frame with upscaling
 async function extractCurrentFrame() {
     const scale = parseFloat(scaleSelect.value);
-    const aiEngine = aiEngineSelect.value;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -715,14 +711,9 @@ async function extractCurrentFrame() {
 
     let finalBlob = blob;
 
-    // Apply AI upscaling if selected
-    if (aiEngine !== 'none' && scale > 1) {
-        showNotification('AI 업스케일링 처리 중...', 'info');
-        finalBlob = await upscaleWithAI(blob, aiEngine, scale);
-    } else if (scale > 1) {
-        // Use browser upscaling
+    // Apply browser upscaling if needed
+    if (scale > 1) {
         finalBlob = await browserUpscale(blob, scale);
-
     }
 
     // Create frame element and add to gallery
@@ -733,14 +724,11 @@ async function extractCurrentFrame() {
     const img = new Image();
     img.onload = () => {
         const dimensions = `${img.width}x${img.height}`;
-        addFrameToGallery(frameUrl, timestamp, finalBlob, dimensions, scale, aiEngine);
+        addFrameToGallery(frameUrl, timestamp, finalBlob, dimensions, scale);
 
         let message = '프레임이 추출되었습니다.';
-        if (aiEngine !== 'none' && scale > 1) {
-            const engineName = aiEngineSelect.options[aiEngineSelect.selectedIndex].text;
-            message = `${engineName}로 ${scale}배 업스케일링 완료 (${dimensions})`;
-        } else if (scale > 1) {
-            message = `브라우저로 ${scale}배 업스케일링 완료 (${dimensions})`;
+        if (scale > 1) {
+            message = `${scale}배 업스케일링 완료 (${dimensions})`;
         }
         showNotification(message, 'success');
     };
@@ -751,16 +739,12 @@ async function extractCurrentFrame() {
 async function extractAllFrames() {
     const interval = parseFloat(intervalSelect.value);
     const scale = parseFloat(scaleSelect.value);
-    const aiEngine = aiEngineSelect.value;
     const duration = video.duration;
     const totalFrames = Math.floor(duration / interval);
 
     if (totalFrames > 100) {
         let message = `${totalFrames}개의 프레임을 추출합니다. 계속하시겠습니까?`;
-        if (aiEngine !== 'none' && scale > 1) {
-            const engineName = aiEngineSelect.options[aiEngineSelect.selectedIndex].text;
-            message = `${totalFrames}개의 프레임을 ${engineName}로 ${scale}배 업스케일링합니다. 계속하시겠습니까?`;
-        } else if (scale > 1) {
+        if (scale > 1) {
             message = `${totalFrames}개의 프레임을 ${scale}배 업스케일링합니다. 계속하시겠습니까?`;
         }
         if (!confirm(message)) {
@@ -780,31 +764,17 @@ async function extractAllFrames() {
     const mimeType = format === 'jpg' ? 'image/jpeg' :
                      format === 'webp' ? 'image/webp' : 'image/png';
 
-    // Show progress modal with AI info
+    // Show progress modal
     progressModal.classList.remove('hidden');
     totalProgress.textContent = totalFrames;
     currentProgress.textContent = 0;
     progressFill.style.width = '0%';
 
-    // Update progress modal text for AI processing
-    const progressTitle = progressModal.querySelector('h3');
-    const progressDesc = progressModal.querySelector('p');
-    if (aiEngine !== 'none' && scale > 1) {
-        progressTitle.textContent = 'AI 업스케일링 중';
-        progressDesc.textContent = `${aiEngineSelect.options[aiEngineSelect.selectedIndex].text}로 프레임을 처리하는 중입니다...`;
-    } else {
-        progressTitle.textContent = '프레임 추출 중';
-        progressDesc.textContent = '비디오를 처리하는 동안 잠시만 기다려주세요...';
-    }
-
     async function extractNextFrame() {
         if (currentFrame >= totalFrames) {
             progressModal.classList.add('hidden');
             let message = `${totalFrames}개의 프레임이 추출되었습니다.`;
-            if (aiEngine !== 'none' && scale > 1) {
-                const engineName = aiEngineSelect.options[aiEngineSelect.selectedIndex].text;
-                message = `${totalFrames}개의 프레임이 ${engineName}로 ${scale}배 업스케일링되었습니다.`;
-            } else if (scale > 1) {
+            if (scale > 1) {
                 message = `${totalFrames}개의 프레임이 ${scale}배 업스케일링되었습니다.`;
             }
             showNotification(message, 'success');
@@ -827,10 +797,8 @@ async function extractAllFrames() {
 
             let finalBlob = blob;
 
-            // Apply AI upscaling if selected
-            if (aiEngine !== 'none' && scale > 1) {
-                finalBlob = await upscaleWithAI(blob, aiEngine, scale);
-            } else if (scale > 1) {
+            // Apply browser upscaling if needed
+            if (scale > 1) {
                 finalBlob = await browserUpscale(blob, scale);
             }
 
@@ -839,7 +807,7 @@ async function extractAllFrames() {
             const img = new Image();
             img.onload = () => {
                 const dimensions = `${img.width}x${img.height}`;
-                addFrameToGallery(frameUrl, timestamp.toFixed(2), finalBlob, dimensions, scale, aiEngine);
+                addFrameToGallery(frameUrl, timestamp.toFixed(2), finalBlob, dimensions, scale);
 
                 currentFrame++;
                 currentProgress.textContent = currentFrame;
@@ -855,7 +823,7 @@ async function extractAllFrames() {
 }
 
 // Add frame to gallery with upscaling info
-function addFrameToGallery(frameUrl, timestamp, blob, dimensions = '', scale = 1, aiEngine = 'none') {
+function addFrameToGallery(frameUrl, timestamp, blob, dimensions = '', scale = 1) {
     // Hide empty state if it's the first frame
     if (extractedFrames.length === 0 && emptyState) {
         emptyState.classList.add('hidden');
