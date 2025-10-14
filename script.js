@@ -259,15 +259,23 @@ function initializeUpload() {
             videoContainer.classList.remove('bg-accent/10');
         });
 
-        videoContainer.addEventListener('drop', (e) => {
+        videoContainer.addEventListener('drop', async (e) => {
             e.preventDefault();
             videoContainer.classList.remove('bg-accent/10');
 
+            // Check for URL text first
+            const urlText = e.dataTransfer.getData('text/plain');
+            if (urlText && isVideoURL(urlText)) {
+                await handleVideoURL(urlText);
+                return;
+            }
+
+            // Then check for files
             const files = e.dataTransfer.files;
             if (files.length > 0 && files[0].type.startsWith('video/')) {
                 handleVideoFile(files[0]);
             } else if (files.length > 0) {
-                showNotification('Please select a valid video file.', 'error');
+                showNotification('유효한 비디오 파일을 선택해주세요.', 'error');
             }
         });
     }
@@ -342,6 +350,118 @@ function initializeGallery() {
 // Store event handlers globally to remove them later
 let videoMetadataHandler = null;
 let videoErrorHandler = null;
+
+// Check if text is a valid video URL
+function isVideoURL(text) {
+    try {
+        const url = new URL(text.trim());
+        // Support common video hosting platforms and direct video files
+        const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m3u8'];
+        const videoDomains = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com', 'twitch.tv'];
+
+        const hasVideoExtension = videoExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
+        const isVideoDomain = videoDomains.some(domain => url.hostname.includes(domain));
+
+        return hasVideoExtension || isVideoDomain || url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+// Handle video URL (with CORS proxy support)
+async function handleVideoURL(urlText) {
+    const url = urlText.trim();
+
+    showNotification('비디오 URL 로딩 중...', 'info');
+
+    // Try direct load first
+    try {
+        await loadVideoFromURL(url);
+    } catch (error) {
+        console.log('Direct load failed, trying with CORS proxy...', error);
+
+        // Try with CORS proxy
+        const corsProxies = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url=',
+            'https://cors-anywhere.herokuapp.com/'
+        ];
+
+        for (const proxy of corsProxies) {
+            try {
+                await loadVideoFromURL(proxy + encodeURIComponent(url));
+                showNotification('비디오가 로드되었습니다 (프록시 사용)', 'success');
+                return;
+            } catch (proxyError) {
+                console.log(`Proxy ${proxy} failed:`, proxyError);
+            }
+        }
+
+        showNotification('비디오 URL을 로드할 수 없습니다. CORS 제한이 있을 수 있습니다.', 'error');
+    }
+}
+
+// Load video from URL
+function loadVideoFromURL(url) {
+    return new Promise((resolve, reject) => {
+        // Remove any existing event listeners
+        if (videoMetadataHandler) {
+            video.removeEventListener('loadedmetadata', videoMetadataHandler);
+            videoMetadataHandler = null;
+        }
+        if (videoErrorHandler) {
+            video.removeEventListener('error', videoErrorHandler);
+            videoErrorHandler = null;
+        }
+
+        currentVideo = { url: url, isURL: true };
+
+        // Hide upload prompt and show video
+        if (uploadPrompt) {
+            uploadPrompt.style.display = 'none';
+        }
+        video.classList.remove('hidden');
+
+        // Show video controls
+        if (videoControls) {
+            videoControls.classList.remove('hidden');
+        }
+
+        // Create handlers
+        videoMetadataHandler = function onMetadataLoaded() {
+            video.removeEventListener('loadedmetadata', videoMetadataHandler);
+            videoMetadataHandler = null;
+
+            console.log('Video loaded from URL:', {
+                duration: video.duration,
+                width: video.videoWidth,
+                height: video.videoHeight,
+                url: url
+            });
+
+            showNotification('비디오가 로드되었습니다', 'success');
+            resolve();
+        };
+
+        videoErrorHandler = function onVideoError(e) {
+            if (videoErrorHandler) {
+                video.removeEventListener('error', videoErrorHandler);
+                videoErrorHandler = null;
+
+                console.error('Video URL load error:', e);
+                reject(new Error('Failed to load video from URL'));
+            }
+        };
+
+        // Add event listeners
+        video.addEventListener('loadedmetadata', videoMetadataHandler);
+        video.addEventListener('error', videoErrorHandler);
+
+        // Set video source
+        video.src = url;
+        video.crossOrigin = 'anonymous'; // Try to enable CORS
+    });
+}
 
 // Handle video file
 function handleVideoFile(file) {
